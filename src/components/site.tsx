@@ -1,9 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Phone, TrendingUp, Menu, X } from "lucide-react";
+import { TrendingUp, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-export const PHONE_DISPLAY = "+54 11 5555-0123";
-export const PHONE_TEL = "tel:+541155550123";
 
 const nav = [
   { to: "/simulador", label: "Simulador" },
@@ -30,9 +28,9 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          <a href={PHONE_TEL} className="hidden items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-cta sm:inline-flex">
-            <Phone className="h-4 w-4" /> {PHONE_DISPLAY}
-          </a>
+          <Link to="/simulador" className="hidden rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-cta sm:inline-flex">
+            Abrir simulador
+          </Link>
           <button aria-label="Menú" onClick={() => setOpen(!open)} className="rounded-lg p-2 md:hidden">
             {open ? <X /> : <Menu />}
           </button>
@@ -59,11 +57,7 @@ export function Footer() {
           <p className="font-display text-lg font-bold">BolsaPráctica</p>
           <p className="mt-2 text-sm opacity-70">Aprendé a invertir en bolsa con dinero virtual. Sin riesgo, sin poner un peso.</p>
         </div>
-        <div className="text-sm">
-          <p className="font-bold">Contacto</p>
-          <a href={PHONE_TEL} className="mt-2 block opacity-80 hover:opacity-100">{PHONE_DISPLAY}</a>
-          <p className="opacity-70">Lun a Vie · 9 a 18 h</p>
-        </div>
+        <div className="text-sm"><p className="font-bold">Contacto</p><Link to="/contacto" className="mt-2 block opacity-80 hover:opacity-100">Escribinos</Link></div>
         <p className="text-xs opacity-60">
           Plataforma educativa. Los precios del simulador son ficticios y no constituyen asesoramiento financiero ni recomendación de inversión.
         </p>
@@ -74,12 +68,9 @@ export function Footer() {
 
 export function MobileCallBar() {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-2 gap-2 border-t bg-background p-3 md:hidden">
-      <a href={PHONE_TEL} className="flex items-center justify-center gap-2 rounded-xl bg-primary py-3 font-bold text-primary-foreground shadow-cta">
-        <Phone className="h-4 w-4" /> Llamar
-      </a>
-      <Link to="/contacto" className="flex items-center justify-center rounded-xl bg-ink py-3 font-bold text-ink-foreground">
-        Pedir asesoría
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background p-3 md:hidden">
+      <Link to="/simulador" className="flex items-center justify-center rounded-xl bg-primary py-3 font-bold text-primary-foreground shadow-cta">
+        Practicar ahora gratis
       </Link>
     </div>
   );
