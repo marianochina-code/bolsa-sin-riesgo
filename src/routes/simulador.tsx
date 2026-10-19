@@ -1,15 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { buy, newPortfolio, sell, SEED_STOCKS, STARTING_CASH, tick, totalValue, type Portfolio } from "@/lib/simulator";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useMemo, useState } from "react";
+import { Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { getChart, getQuotes } from "@/lib/market.functions";
+import {
+  cancelOrder, closePosition, equity, newAccount, placeOrder, processPrices, unrealized, usedMargin,
+  type Account, type Settings,
+} from "@/lib/trading";
 import { Section } from "@/components/site";
+import { SetupForm } from "@/components/trading/SetupForm";
+import { OrderTicket } from "@/components/trading/OrderTicket";
+import { exportCsv, TradeLog } from "@/components/trading/TradeLog";
 
 export const Route = createFileRoute("/simulador")({
   head: () => ({
     meta: [
-      { title: "Simulador de inversiones gratis — BolsaPráctica" },
-      { name: "description", content: "Comprá y vendé acciones con USD 10.000 virtuales. Practicá trading sin riesgo y sin registrarte." },
-      { property: "og:title", content: "Simulador de inversiones gratis — BolsaPráctica" },
-      { property: "og:description", content: "Practicá con USD 10.000 virtuales en un mercado simulado." },
+      { title: "Simulador de paper trading con datos en tiempo real — BolsaPráctica" },
+      { name: "description", content: "Practicá trading con cotizaciones reales, órdenes límite, stop-loss, take-profit, comisiones, impuestos y bitácora de operaciones." },
+      { property: "og:title", content: "Simulador de paper trading en tiempo real" },
+      { property: "og:description", content: "Órdenes avanzadas, gestión de riesgo obligatoria y trading journal. Sin poner plata." },
       { property: "og:url", content: "/simulador" },
     ],
     links: [{ rel: "canonical", href: "/simulador" }],
@@ -17,80 +27,203 @@ export const Route = createFileRoute("/simulador")({
   component: Simulador,
 });
 
-const KEY = "bolsapractica-portfolio";
+const SYMBOLS: [string, string][] = [
+  ["AAPL", "Apple"], ["MSFT", "Microsoft"], ["NVDA", "NVIDIA"], ["AMZN", "Amazon"], ["TSLA", "Tesla"],
+  ["MELI", "MercadoLibre"], ["YPF", "YPF"], ["GGAL", "Grupo Galicia"], ["SPY", "ETF S&P 500"], ["QQQ", "ETF Nasdaq 100"],
+  ["BTC-USD", "Bitcoin (24/7)"], ["ETH-USD", "Ethereum (24/7)"],
+];
+const KEY = "paper-account-v1";
 const usd = (n: number) => n.toLocaleString("es-AR", { style: "currency", currency: "USD" });
 
 function Simulador() {
-  const [stocks, setStocks] = useState(SEED_STOCKS);
-  const [pf, setPf] = useState<Portfolio>(newPortfolio);
-  const [qty, setQty] = useState<Record<string, number>>({});
-  const [msg, setMsg] = useState<string | null>(null);
+  const [acc, setAcc] = useState<Account | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [sel, setSel] = useState("AAPL");
+  const [tab, setTab] = useState<"pos" | "ord" | "log">("pos");
+  const fetchQuotes = useServerFn(getQuotes);
+  const fetchChart = useServerFn(getChart);
 
   useEffect(() => {
-    const saved = localStorage.getItem(KEY);
-    if (saved) try { setPf(JSON.parse(saved)); } catch { /* ignore */ }
-    const id = setInterval(() => setStocks((s) => tick(s)), 2000);
-    return () => clearInterval(id);
+    try { const s = localStorage.getItem(KEY); if (s) setAcc(JSON.parse(s)); } catch { /* ignore */ }
+    setLoaded(true);
   }, []);
+  const save = (a: Account) => { setAcc(a); localStorage.setItem(KEY, JSON.stringify(a)); };
 
-  const save = (p: Portfolio) => { setPf(p); localStorage.setItem(KEY, JSON.stringify(p)); };
-  const trade = (kind: "buy" | "sell", sym: string, price: number) => {
-    try {
-      const q = qty[sym] ?? 1;
-      save(kind === "buy" ? buy(pf, sym, q, price) : sell(pf, sym, q, price));
-      setMsg(`${kind === "buy" ? "Compraste" : "Vendiste"} ${q} ${sym} a ${usd(price)}`);
-    } catch (e) { setMsg((e as Error).message); }
-  };
+  const quotes = useQuery({
+    queryKey: ["quotes"], queryFn: () => fetchQuotes({ data: { symbols: SYMBOLS.map((s) => s[0]) } }),
+    refetchInterval: 5000, enabled: !!acc,
+  });
+  const chart = useQuery({
+    queryKey: ["chart", sel], queryFn: () => fetchChart({ data: { symbol: sel } }),
+    refetchInterval: 30000, enabled: !!acc,
+  });
+  const prices = useMemo(() => Object.fromEntries((quotes.data ?? []).map((q) => [q.symbol, q.price])), [quotes.data]);
 
-  const total = totalValue(pf, stocks);
-  const pnl = total - STARTING_CASH;
+  useEffect(() => {
+    if (!acc || !quotes.data?.length) return;
+    const next = processPrices(acc, prices, Date.now());
+    if (next !== acc && (next.positions.length !== acc.positions.length || next.orders.length !== acc.orders.length)) save(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prices]);
+
+  if (!loaded) return <Section className="py-10"><p>Cargando…</p></Section>;
+
+  if (!acc || editing)
+    return (
+      <Section className="max-w-2xl py-10">
+        <SetupForm initial={acc?.settings} onSave={(s: Settings) => {
+          if (acc && !confirm("Esto reinicia tu cuenta y borra el historial. ¿Continuar?")) return;
+          save(newAccount(s)); setEditing(false);
+        }} />
+        {acc && <button onClick={() => setEditing(false)} className="mt-4 text-sm underline">Cancelar</button>}
+      </Section>
+    );
+
+  const eq = equity(acc, prices);
+  const pnl = eq - acc.settings.capital;
+  const selQuote = quotes.data?.find((q) => q.symbol === sel);
+  const selPos = acc.positions.filter((p) => p.symbol === sel);
+  const wins = acc.trades.filter((t) => t.net > 0).length;
 
   return (
-    <Section className="py-10">
-      <h1 className="text-3xl font-bold md:text-4xl">Simulador de bolsa</h1>
-      <p className="mt-2 text-muted-foreground">Dinero 100% virtual. Precios simulados con fines educativos.</p>
-
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Stat label="Valor total" value={usd(total)} />
-        <Stat label="Efectivo virtual" value={usd(pf.cash)} />
-        <Stat label="Ganancia / pérdida" value={`${pnl >= 0 ? "+" : ""}${usd(pnl)}`} tone={pnl >= 0 ? "text-success" : "text-destructive"} />
+    <Section className="py-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold md:text-3xl">Paper trading</h1>
+          <p className="text-sm text-muted-foreground">
+            Apalancamiento 1:{acc.settings.leverage} · Riesgo máx. {acc.settings.maxRiskPct}% · Ratio mín. 1:{acc.settings.minRR} · Comisión {acc.settings.commissionPct}% (mín. USD {acc.settings.commissionMin}) · Impuesto {acc.settings.taxPct}%
+          </p>
+        </div>
+        <button onClick={() => setEditing(true)} className="rounded-lg border px-3 py-2 text-sm font-semibold">Configuración</button>
       </div>
-      {msg && <p className="mt-4 rounded-xl bg-secondary px-4 py-3 text-sm font-semibold">{msg}</p>}
 
-      <div className="mt-6 space-y-3">
-        {stocks.map((s) => {
-          const up = s.price >= s.prev;
-          const h = pf.holdings[s.symbol];
-          return (
-            <div key={s.symbol} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-card p-4 shadow-card md:grid-cols-[minmax(0,1fr)_auto_auto]">
-              <div className="min-w-0">
-                <p className="font-display font-bold">{s.symbol} <span className="font-sans text-sm font-normal text-muted-foreground">{s.name}</span></p>
-                <p className="text-xs text-muted-foreground">{h ? `Tenés ${h.qty} · prom. ${usd(h.avg)}` : "Sin posición"}</p>
-              </div>
-              <p className={`text-right font-bold tabular-nums ${up ? "text-success" : "text-destructive"}`}>{usd(s.price)}</p>
-              <div className="col-span-2 flex gap-2 md:col-span-1">
-                <input type="number" min={1} value={qty[s.symbol] ?? 1} aria-label={`Cantidad ${s.symbol}`}
-                  onChange={(e) => setQty({ ...qty, [s.symbol]: Math.max(1, Math.floor(+e.target.value || 1)) })}
-                  className="w-20 rounded-lg border bg-background px-2 py-2" />
-                <button onClick={() => trade("buy", s.symbol, s.price)} className="flex-1 rounded-lg bg-primary px-4 py-2 font-bold text-primary-foreground md:flex-none">Comprar</button>
-                <button onClick={() => trade("sell", s.symbol, s.price)} className="flex-1 rounded-lg bg-ink px-4 py-2 font-bold text-ink-foreground md:flex-none">Vender</button>
-              </div>
-            </div>
-          );
-        })}
+      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <Stat l="Patrimonio" v={usd(eq)} />
+        <Stat l="Efectivo" v={usd(acc.cash)} />
+        <Stat l="Margen usado" v={usd(usedMargin(acc))} />
+        <Stat l="Resultado total" v={`${pnl >= 0 ? "+" : ""}${usd(pnl)}`} tone={pnl >= 0 ? "text-success" : "text-destructive"} />
+        <Stat l="Operaciones ganadoras" v={acc.trades.length ? `${wins}/${acc.trades.length} (${Math.round((wins / acc.trades.length) * 100)}%)` : "–"} />
       </div>
-      <button onClick={() => { save(newPortfolio()); setMsg("Cartera reiniciada"); }} className="mt-6 text-sm font-semibold text-muted-foreground underline">
-        Reiniciar cartera
-      </button>
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)_340px]">
+        <div className="rounded-2xl border bg-card p-2 shadow-card lg:max-h-[620px] lg:overflow-auto">
+          <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+            {quotes.isError ? "Error al cargar cotizaciones" : quotes.dataUpdatedAt ? `En vivo · ${new Date(quotes.dataUpdatedAt).toLocaleTimeString("es-AR")}` : "Conectando…"}
+          </p>
+          <div className="flex gap-2 overflow-x-auto lg:block">
+            {SYMBOLS.map(([s, n]) => {
+              const q = quotes.data?.find((x) => x.symbol === s);
+              const ch = q ? ((q.price - q.prevClose) / q.prevClose) * 100 : 0;
+              return (
+                <button key={s} onClick={() => setSel(s)} className={`w-40 shrink-0 rounded-xl px-3 py-2 text-left lg:w-full ${sel === s ? "bg-secondary" : ""}`}>
+                  <div className="flex justify-between gap-2 text-sm font-bold"><span>{s}</span><span className="tabular-nums">{q ? q.price.toFixed(2) : "…"}</span></div>
+                  <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                    <span className="truncate">{n}</span>
+                    <span className={ch >= 0 ? "text-success" : "text-destructive"}>{q ? `${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%` : ""}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-card">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-display text-xl font-bold">{sel}</h2>
+            <span className="text-xs text-muted-foreground">
+              Mercado {selQuote?.state ?? "…"} · Gráfico intradía 1 min
+            </span>
+          </div>
+          <div className="mt-3 h-72 md:h-[540px]">
+            {chart.data?.points.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chart.data.points}>
+                  <XAxis dataKey="t" tickFormatter={(t) => new Date(t).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} minTickGap={40} fontSize={11} />
+                  <YAxis domain={["auto", "auto"]} fontSize={11} width={60} />
+                  <Tooltip labelFormatter={(t) => new Date(t as number).toLocaleString("es-AR")} formatter={(v: number) => v.toFixed(2)} />
+                  <Line type="monotone" dataKey="p" stroke="var(--primary)" dot={false} strokeWidth={2} isAnimationActive={false} />
+                  {selPos.map((p) => [
+                    <ReferenceLine key={p.id + "e"} y={p.entry} stroke="var(--muted-foreground)" strokeDasharray="4 4" label={{ value: "Entrada", fontSize: 10 }} />,
+                    <ReferenceLine key={p.id + "s"} y={p.sl} stroke="var(--destructive)" label={{ value: "SL", fontSize: 10 }} />,
+                    <ReferenceLine key={p.id + "t"} y={p.tp} stroke="var(--success)" label={{ value: "TP", fontSize: 10 }} />,
+                  ])}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="grid h-full place-items-center text-sm text-muted-foreground">{chart.data?.error ?? "Cargando gráfico…"}</p>
+            )}
+          </div>
+        </div>
+
+        <OrderTicket account={acc} symbol={sel} price={prices[sel]} onPlace={(o) => {
+          try { save(placeOrder(acc, o, prices[sel])); setTab(o.type === "market" ? "pos" : "ord"); } catch (e) { alert((e as Error).message); }
+        }} />
+      </div>
+
+      <div className="mt-6 flex gap-2 overflow-x-auto">
+        {([["pos", `Posiciones (${acc.positions.length})`], ["ord", `Órdenes pendientes (${acc.orders.length})`], ["log", `Historial (${acc.trades.length})`]] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${tab === k ? "bg-ink text-ink-foreground" : "bg-secondary"}`}>{l}</button>
+        ))}
+        {tab === "log" && acc.trades.length > 0 && (
+          <button onClick={() => exportCsv(acc.trades)} className="ml-auto shrink-0 rounded-full border px-4 py-2 text-sm font-semibold">Exportar a Excel (CSV)</button>
+        )}
+      </div>
+
+      <div className="mt-4">
+        {tab === "pos" && (acc.positions.length ? (
+          <div className="space-y-3">
+            {acc.positions.map((p) => {
+              const px = prices[p.symbol] ?? p.entry;
+              const u = unrealized(p, px);
+              return (
+                <div key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-card p-4 shadow-card">
+                  <div className="min-w-0 text-sm">
+                    <p className="font-display font-bold">{p.symbol} · {p.side === "long" ? "Compra" : "Venta corta"} · {p.qty}</p>
+                    <p className="text-muted-foreground">Entrada {p.entry.toFixed(2)} · Actual {px.toFixed(2)} · SL {p.sl} · TP {p.tp}</p>
+                    <p className="truncate text-muted-foreground">Por qué: {p.journal.reason}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-bold tabular-nums ${u >= 0 ? "text-success" : "text-destructive"}`}>{u >= 0 ? "+" : ""}{u.toFixed(2)}</p>
+                    <button onClick={() => save(closePosition(acc, p.id, px, Date.now(), "manual"))} className="mt-1 rounded-lg bg-ink px-3 py-1.5 text-xs font-bold text-ink-foreground">Cerrar</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : <Empty t="No tenés posiciones abiertas." />)}
+
+        {tab === "ord" && (acc.orders.length ? (
+          <div className="space-y-3">
+            {acc.orders.map((o) => (
+              <div key={o.id} className="flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 text-sm shadow-card">
+                <p className="min-w-0">
+                  <b>{o.symbol}</b> · Límite {o.side === "long" ? "compra" : "venta"} {o.qty} @ {o.limitPrice} · SL {o.sl} · TP {o.tp}
+                </p>
+                <button onClick={() => save(cancelOrder(acc, o.id))} className="shrink-0 rounded-lg border px-3 py-1.5 text-xs font-bold">Cancelar</button>
+              </div>
+            ))}
+          </div>
+        ) : <Empty t="No hay órdenes pendientes." />)}
+
+        {tab === "log" && (
+          <TradeLog trades={acc.trades} onJournal={(id, j) => save({ ...acc, trades: acc.trades.map((t) => (t.id === id ? { ...t, journal: j } : t)) })} />
+        )}
+      </div>
+
+      <p className="mt-8 text-xs text-muted-foreground">
+        Cotizaciones de mercado real (fuente pública; las acciones solo se mueven en horario de bolsa de EE.UU., las cripto 24/7). Herramienta educativa: no es asesoramiento financiero.
+      </p>
     </Section>
   );
 }
 
-function Stat({ label, value, tone = "" }: { label: string; value: string; tone?: string }) {
+function Stat({ l, v, tone = "" }: { l: string; v: string; tone?: string }) {
   return (
-    <div className="rounded-2xl border bg-card p-5 shadow-card">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className={`mt-1 font-display text-2xl font-bold tabular-nums ${tone}`}>{value}</p>
+    <div className="rounded-2xl border bg-card p-4 shadow-card">
+      <p className="text-xs text-muted-foreground">{l}</p>
+      <p className={`mt-1 font-display text-lg font-bold tabular-nums md:text-xl ${tone}`}>{v}</p>
     </div>
   );
 }
+const Empty = ({ t }: { t: string }) => <p className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground">{t}</p>;
