@@ -50,8 +50,8 @@ function Index() {
               <Link to="/simulador" className="rounded-xl bg-primary px-6 py-4 text-center font-bold text-primary-foreground shadow-cta">
                 Empezar a practicar
               </Link>
-              <Link to="/aprender" className="flex items-center justify-center rounded-xl border border-ink-foreground/30 px-6 py-4 font-bold">
-                Cómo funciona
+              <Link to="/tutorial" className="flex items-center justify-center rounded-xl border border-ink-foreground/30 px-6 py-4 font-bold">
+                Ver tutorial
               </Link>
             </div>
             <div className="mt-8 grid grid-cols-3 gap-4 text-center">
