@@ -3,6 +3,7 @@ import { ShieldCheck, Wallet, LineChart, GraduationCap, Star } from "lucide-reac
 import { Section } from "@/components/site";
 
 export const Route = createFileRoute("/")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Simulador de bolsa gratis | Invertí sin poner plata — BolsaPráctica" },

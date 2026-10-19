@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Section } from "@/components/site";
 
 export const Route = createFileRoute("/aprender")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Cómo invertir en bolsa desde cero — Guía BolsaPráctica" },

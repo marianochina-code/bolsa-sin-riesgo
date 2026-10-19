@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Section } from "@/components/site";
 
 export const Route = createFileRoute("/tutorial")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Tutorial: cómo usar el simulador de paper trading — BolsaPráctica" },
