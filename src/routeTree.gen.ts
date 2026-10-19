@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AprenderRouteImport } from './routes/aprender'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactoRouteImport } from './routes/contacto'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SimuladorRouteImport } from './routes/simulador'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,9 +26,19 @@ const AprenderRoute = AprenderRouteImport.update({
   path: '/aprender',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactoRoute = ContactoRouteImport.update({
   id: '/contacto',
   path: '/contacto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SimuladorRoute = SimuladorRouteImport.update({
@@ -38,34 +50,51 @@ const SimuladorRoute = SimuladorRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aprender': typeof AprenderRoute
+  '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/simulador': typeof SimuladorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aprender': typeof AprenderRoute
+  '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/simulador': typeof SimuladorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/aprender': typeof AprenderRoute
+  '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/simulador': typeof SimuladorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/aprender' | '/contacto' | '/simulador'
+  fullPaths:
+    '/' | '/aprender' | '/auth' | '/contacto' | '/reset-password' | '/simulador'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/aprender' | '/contacto' | '/simulador'
-  id: '__root__' | '/' | '/aprender' | '/contacto' | '/simulador'
+  to:
+    '/' | '/aprender' | '/auth' | '/contacto' | '/reset-password' | '/simulador'
+  id:
+    | '__root__'
+    | '/'
+    | '/aprender'
+    | '/auth'
+    | '/contacto'
+    | '/reset-password'
+    | '/simulador'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AprenderRoute: typeof AprenderRoute
+  AuthRoute: typeof AuthRoute
   ContactoRoute: typeof ContactoRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SimuladorRoute: typeof SimuladorRoute
 }
 
@@ -85,11 +114,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AprenderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contacto': {
       id: '/contacto'
       path: '/contacto'
       fullPath: '/contacto'
       preLoaderRoute: typeof ContactoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/simulador': {
@@ -105,7 +148,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AprenderRoute: AprenderRoute,
+  AuthRoute: AuthRoute,
   ContactoRoute: ContactoRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SimuladorRoute: SimuladorRoute,
 }
 export const routeTree = rootRouteImport

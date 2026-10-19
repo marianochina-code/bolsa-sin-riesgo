@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
@@ -32,7 +34,6 @@ const SYMBOLS: [string, string][] = [
   ["MELI", "MercadoLibre"], ["YPF", "YPF"], ["GGAL", "Grupo Galicia"], ["SPY", "ETF S&P 500"], ["QQQ", "ETF Nasdaq 100"],
   ["BTC-USD", "Bitcoin (24/7)"], ["ETH-USD", "Ethereum (24/7)"],
 ];
-const KEY = "paper-account-v1";
 const usd = (n: number) => n.toLocaleString("es-AR", { style: "currency", currency: "USD" });
 
 function Simulador() {
@@ -44,11 +45,24 @@ function Simulador() {
   const fetchQuotes = useServerFn(getQuotes);
   const fetchChart = useServerFn(getChart);
 
+  const { user, loading } = useAuth();
+
   useEffect(() => {
-    try { const s = localStorage.getItem(KEY); if (s) setAcc(JSON.parse(s)); } catch { /* ignore */ }
-    setLoaded(true);
-  }, []);
-  const save = (a: Account) => { setAcc(a); localStorage.setItem(KEY, JSON.stringify(a)); };
+    if (loading) return;
+    if (!user) { setAcc(null); setLoaded(true); return; }
+    setLoaded(false);
+    supabase.from("paper_accounts").select("data").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      setAcc((data?.data as unknown as Account) ?? null);
+      setLoaded(true);
+    });
+  }, [user, loading]);
+  const save = (a: Account) => {
+    setAcc(a);
+    if (!user) return;
+    supabase.from("paper_accounts")
+      .upsert({ user_id: user.id, data: a as never, updated_at: new Date().toISOString() })
+      .then(({ error }) => { if (error) alert("No se pudo guardar tu cuenta. Revisá tu conexión."); });
+  };
 
   const quotes = useQuery({
     queryKey: ["quotes"], queryFn: () => fetchQuotes({ data: { symbols: SYMBOLS.map((s) => s[0]) } }),
@@ -67,7 +81,19 @@ function Simulador() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prices]);
 
-  if (!loaded) return <Section className="py-10"><p>Cargando…</p></Section>;
+  if (loading || !loaded) return <Section className="py-10"><p>Cargando…</p></Section>;
+
+  if (!user)
+    return (
+      <Section className="max-w-xl py-16 text-center">
+        <h1 className="text-3xl font-bold">Simulador de paper trading</h1>
+        <p className="mt-3 text-muted-foreground">Creá tu cuenta gratis para que tu cartera, historial y bitácora queden guardados.</p>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link to="/auth" className="rounded-xl bg-primary px-6 py-4 font-bold text-primary-foreground shadow-cta">Ingresar o crear cuenta</Link>
+          <Link to="/tutorial" className="rounded-xl border px-6 py-4 font-bold">Ver tutorial</Link>
+        </div>
+      </Section>
+    );
 
   if (!acc || editing)
     return (
