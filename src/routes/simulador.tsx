@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { getChart, getQuotes } from "@/lib/market.functions";
+import { getChart, getQuotes, searchSymbols } from "@/lib/market.functions";
 import {
   cancelOrder, closePosition, equity, newAccount, placeOrder, processPrices, unrealized, usedMargin,
   type Account, type Settings,
@@ -88,6 +88,11 @@ function Simulador() {
     queryKey: ["quotes", allSymbols.join(",")], queryFn: () => fetchQuotes({ data: { symbols: allSymbols } }),
     refetchInterval: 5000, enabled: !!acc, placeholderData: (p) => p,
   });
+  const chart = useQuery({
+    queryKey: ["chart", sel], queryFn: () => fetchChart({ data: { symbol: sel } }),
+    refetchInterval: 30000, enabled: !!acc,
+  });
+  const prices = useMemo(() => Object.fromEntries((quotes.data ?? []).map((q) => [q.symbol, q.price])), [quotes.data]);
 
   useEffect(() => {
     if (!acc || !quotes.data?.length) return;
