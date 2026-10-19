@@ -163,7 +163,7 @@ function Simulador() {
                 {!search.isFetching && !search.data?.length && <p className="p-3 text-xs text-muted-foreground">Sin resultados</p>}
                 {search.data?.map((h) => (
                   <button key={h.symbol} onClick={() => {
-                    if (!watch.some((w) => w[0] === h.symbol)) updateWatch([[h.symbol, h.name], ...watch].slice(0, 18));
+                    if (!watch.some((w) => w[0] === h.symbol)) updateWatch(([[h.symbol, h.name]] as [string, string][]).concat(watch).slice(0, 18));
                     setSel(h.symbol); setQ(""); setDq("");
                   }} className="block w-full px-3 py-2 text-left text-sm hover:bg-secondary">
                     <b>{h.symbol}</b> <span className="text-muted-foreground">· {h.name}</span>
