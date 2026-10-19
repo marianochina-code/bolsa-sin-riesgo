@@ -57,8 +57,8 @@ function Index() {
               {[["Tiempo real", "cotizaciones"], ["1–2%", "riesgo máx."], ["0 USD", "de tu bolsillo"]].map(([a, b]) => (
                 <div key={b}><p className="font-display text-2xl font-bold">{a}</p><p className="text-xs opacity-70">{b}</p></div>
               ))}
+              </div>
             </div>
-          </div>
         </Section>
       </div>
 
