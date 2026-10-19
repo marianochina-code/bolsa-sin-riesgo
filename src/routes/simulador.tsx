@@ -157,7 +157,7 @@ function Simulador() {
         </div>
 
         <OrderTicket account={acc} symbol={sel} price={prices[sel]} onPlace={(o) => {
-          try { save(placeOrder(acc, o, prices[sel])); setTab(o.type === "market" ? "pos" : "ord"); } catch (e) { alert((e as Error).message); }
+          try { save(placeOrder(acc, o, prices[sel] ?? 0)); setTab(o.type === "market" ? "pos" : "ord"); } catch (e) { alert((e as Error).message); }
         }} />
       </div>
 
