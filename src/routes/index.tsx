@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShieldCheck, Wallet, LineChart, GraduationCap, Star } from "lucide-react";
-import { LeadForm } from "@/components/LeadForm";
 import { Section } from "@/components/site";
 
 export const Route = createFileRoute("/")({
@@ -35,18 +34,18 @@ function Index() {
   return (
     <>
       <div className="bg-hero text-ink-foreground">
-        <Section className="grid gap-10 py-14 md:grid-cols-[1.2fr_1fr] md:py-20">
-          <div>
+        <Section className="py-14 md:py-20">
+          <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-sm font-semibold">
               <Star className="h-4 w-4 text-accent" /> 100% gratis · Sin tarjeta
             </span>
             <h1 className="mt-5 text-4xl font-extrabold leading-tight md:text-6xl">
               Aprendé a invertir en bolsa <span className="text-primary">sin poner plata</span>
             </h1>
-            <p className="mt-5 max-w-xl text-lg opacity-80">
+            <p className="mx-auto mt-5 max-w-xl text-lg opacity-80">
               Paper trading con cotizaciones reales, stop-loss, take-profit, comisiones e impuestos. Configurá el mismo capital que vas a usar de verdad.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link to="/simulador" className="rounded-xl bg-primary px-6 py-4 text-center font-bold text-primary-foreground shadow-cta">
                 Empezar a practicar
               </Link>
@@ -58,9 +57,8 @@ function Index() {
               {[["Tiempo real", "cotizaciones"], ["1–2%", "riesgo máx."], ["0 USD", "de tu bolsillo"]].map(([a, b]) => (
                 <div key={b}><p className="font-display text-2xl font-bold">{a}</p><p className="text-xs opacity-70">{b}</p></div>
               ))}
+              </div>
             </div>
-          </div>
-          <LeadForm />
         </Section>
       </div>
 
