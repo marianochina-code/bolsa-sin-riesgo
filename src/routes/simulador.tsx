@@ -16,6 +16,7 @@ import { OrderTicket } from "@/components/trading/OrderTicket";
 import { exportCsv, TradeLog } from "@/components/trading/TradeLog";
 
 export const Route = createFileRoute("/simulador")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Simulador de paper trading con datos en tiempo real — BolsaPráctica" },

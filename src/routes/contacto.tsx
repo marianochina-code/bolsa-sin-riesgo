@@ -7,6 +7,7 @@ const WHATSAPP_HREF =
   "https://wa.me/541131909003?text=" + encodeURIComponent("Hola, tengo una consulta sobre el simulador de bolsa");
 
 export const Route = createFileRoute("/contacto")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Contacto por WhatsApp — BolsaPráctica" },

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Section } from "@/components/site";
 
 export const Route = createFileRoute("/reset-password")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Nueva contraseña — BolsaPráctica" },
