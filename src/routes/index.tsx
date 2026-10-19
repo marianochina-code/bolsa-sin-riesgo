@@ -77,26 +77,18 @@ function Index() {
         </div>
       </Section>
 
-      <Section className="grid gap-10 py-10 md:grid-cols-2 md:items-center">
-        <div>
-          <h2 className="text-3xl font-bold">Cómo funciona</h2>
-          <ol className="mt-6 space-y-4">
-            {steps.map((s, i) => (
-              <li key={s} className="flex gap-4">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary font-bold text-primary-foreground">{i + 1}</span>
-                <p className="pt-1.5">{s}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <div className="rounded-2xl bg-ink p-8 text-ink-foreground">
-          <p className="font-display text-2xl font-bold">¿Querés que un mentor revise tu bitácora?</p>
-          <p className="mt-2 opacity-75">Un mentor te explica cómo usar el simulador y armar tu primera cartera de práctica.</p>
-          <Link to="/contacto" className="mt-6 flex items-center justify-center rounded-xl bg-primary py-4 font-bold text-primary-foreground shadow-cta">
-            Dejanos tus datos
-          </Link>
-        </div>
+      <Section className="py-10">
+        <h2 className="text-3xl font-bold">Cómo funciona</h2>
+        <ol className="mt-6 grid gap-4 sm:grid-cols-2">
+          {steps.map((s, i) => (
+            <li key={s} className="flex gap-4 rounded-2xl border bg-card p-5 shadow-card">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary font-bold text-primary-foreground">{i + 1}</span>
+              <p className="pt-1.5">{s}</p>
+            </li>
+          ))}
+        </ol>
       </Section>
+
 
       <Section className="py-16">
         <h2 className="text-3xl font-bold">Preguntas frecuentes</h2>

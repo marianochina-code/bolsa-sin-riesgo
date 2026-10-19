@@ -70,7 +70,7 @@ export function Footer() {
           <p className="font-display text-lg font-bold">BolsaPráctica</p>
           <p className="mt-2 text-sm opacity-70">Aprendé a invertir en bolsa con dinero virtual. Sin riesgo, sin poner un peso.</p>
         </div>
-        <div className="text-sm"><p className="font-bold">Contacto</p><Link to="/contacto" className="mt-2 block opacity-80 hover:opacity-100">Escribinos</Link></div>
+        <div className="text-sm"><p className="font-bold">Contacto</p><Link to="/contacto" className="mt-2 block opacity-80 hover:opacity-100">Ver contacto</Link></div>
         <p className="text-xs opacity-60">
           Plataforma educativa. Los precios del simulador son ficticios y no constituyen asesoramiento financiero ni recomendación de inversión.
         </p>

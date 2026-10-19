@@ -18,7 +18,7 @@ export function LeadForm() {
       className="space-y-3 rounded-2xl bg-card p-6 text-card-foreground shadow-card"
     >
       <p className="font-display text-xl font-bold">Pedí tu asesoría gratuita</p>
-      <p className="text-sm text-muted-foreground">Un mentor te guía en tus primeras operaciones de práctica.</p>
+      <p className="text-sm text-muted-foreground">Te guiamos en tus primeras operaciones de práctica.</p>
       <input required maxLength={80} name="nombre" placeholder="Nombre" className={field} />
       <input required type="tel" maxLength={30} name="telefono" placeholder="Teléfono / WhatsApp" className={field} />
       <input required type="email" maxLength={120} name="email" placeholder="Email" className={field} />
