@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShieldCheck, Wallet, LineChart, GraduationCap, Star } from "lucide-react";
-import { LeadForm } from "@/components/LeadForm";
 import { Section } from "@/components/site";
 
 export const Route = createFileRoute("/")({
@@ -35,8 +34,8 @@ function Index() {
   return (
     <>
       <div className="bg-hero text-ink-foreground">
-        <Section className="grid gap-10 py-14 md:grid-cols-[1.2fr_1fr] md:py-20">
-          <div>
+        <Section className="py-14 md:py-20">
+          <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-sm font-semibold">
               <Star className="h-4 w-4 text-accent" /> 100% gratis · Sin tarjeta
             </span>
@@ -60,7 +59,6 @@ function Index() {
               ))}
             </div>
           </div>
-          <LeadForm />
         </Section>
       </div>
 
