@@ -5,7 +5,7 @@ import { EMOTIONS } from "./TradeLog";
 const field = "w-full rounded-lg border bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-ring";
 
 export function OrderTicket({ account, symbol, price, onPlace }: {
-  account: Account; symbol: string; price?: number; onPlace: (o: Order) => void;
+  account: Account; symbol: string; price?: number | undefined; onPlace: (o: Order) => void;
 }) {
   const [side, setSide] = useState<Side>("long");
   const [type, setType] = useState<OrderType>("market");

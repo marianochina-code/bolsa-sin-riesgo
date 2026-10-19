@@ -11,11 +11,11 @@ export type Settings = {
   minRR: number;
 };
 
-export type Journal = { reason: string; emotion: string; notes: string; entryShot?: string; exitShot?: string };
+export type Journal = { reason: string; emotion: string; notes: string; entryShot?: string | undefined; exitShot?: string | undefined };
 
 export type Order = {
   id: string; symbol: string; side: Side; type: OrderType; qty: number;
-  limitPrice?: number; sl: number; tp: number; createdAt: number; journal: Journal;
+  limitPrice?: number | undefined; sl: number; tp: number; createdAt: number; journal: Journal;
 };
 
 export type Position = {

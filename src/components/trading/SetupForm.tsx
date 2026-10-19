@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS, MAX_RISK_PCT, type Settings } from "@/lib/trading";
 
 const field = "w-full rounded-xl border bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring";
 
-export function SetupForm({ initial, onSave }: { initial?: Settings; onSave: (s: Settings) => void }) {
+export function SetupForm({ initial, onSave }: { initial?: Settings | undefined; onSave: (s: Settings) => void }) {
   const [s, setS] = useState<Settings>(initial ?? DEFAULT_SETTINGS);
   const num = (k: keyof Settings) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setS({ ...s, [k]: Number(e.target.value) });
