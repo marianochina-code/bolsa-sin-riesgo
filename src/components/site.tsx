@@ -1,16 +1,20 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { TrendingUp, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
-
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 const nav = [
   { to: "/simulador", label: "Simulador" },
+  { to: "/tutorial", label: "Tutorial" },
   { to: "/aprender", label: "Aprender" },
   { to: "/contacto", label: "Contacto" },
 ] as const;
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
       <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
@@ -28,9 +32,18 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          <Link to="/simulador" className="hidden rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-cta sm:inline-flex">
-            Abrir simulador
-          </Link>
+          {user ? (
+            <button
+              onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/", replace: true }); }}
+              className="rounded-full border px-4 py-2 text-sm font-bold"
+            >
+              Salir
+            </button>
+          ) : (
+            <Link to="/auth" className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-cta">
+              Ingresar
+            </Link>
+          )}
           <button aria-label="Menú" onClick={() => setOpen(!open)} className="rounded-lg p-2 md:hidden">
             {open ? <X /> : <Menu />}
           </button>
