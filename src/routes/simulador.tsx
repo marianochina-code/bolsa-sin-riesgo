@@ -43,8 +43,19 @@ function Simulador() {
   const [editing, setEditing] = useState(false);
   const [sel, setSel] = useState("AAPL");
   const [tab, setTab] = useState<"pos" | "ord" | "log">("pos");
+  const [watch, setWatch] = useState<[string, string][]>(SYMBOLS);
+  const [q, setQ] = useState("");
+  const [dq, setDq] = useState("");
   const fetchQuotes = useServerFn(getQuotes);
   const fetchChart = useServerFn(getChart);
+  const doSearch = useServerFn(searchSymbols);
+
+  useEffect(() => {
+    try { const w = localStorage.getItem("watchlist"); if (w) setWatch(JSON.parse(w)); } catch { /* ignore */ }
+  }, []);
+  useEffect(() => { const t = setTimeout(() => setDq(q.trim()), 350); return () => clearTimeout(t); }, [q]);
+  const updateWatch = (w: [string, string][]) => { setWatch(w); localStorage.setItem("watchlist", JSON.stringify(w)); };
+  const search = useQuery({ queryKey: ["search", dq], queryFn: () => doSearch({ data: { q: dq } }), enabled: dq.length > 0 });
 
   const { user, loading } = useAuth();
 
@@ -65,15 +76,18 @@ function Simulador() {
       .then(({ error }) => { if (error) alert("No se pudo guardar tu cuenta. Revisá tu conexión."); });
   };
 
+  const allSymbols = useMemo(() => {
+    const s = new Set(watch.map((w) => w[0]));
+    s.add(sel);
+    acc?.positions.forEach((p) => s.add(p.symbol));
+    acc?.orders.forEach((o) => s.add(o.symbol));
+    return [...s].slice(0, 20);
+  }, [watch, sel, acc]);
+
   const quotes = useQuery({
-    queryKey: ["quotes"], queryFn: () => fetchQuotes({ data: { symbols: SYMBOLS.map((s) => s[0]) } }),
-    refetchInterval: 5000, enabled: !!acc,
+    queryKey: ["quotes", allSymbols.join(",")], queryFn: () => fetchQuotes({ data: { symbols: allSymbols } }),
+    refetchInterval: 5000, enabled: !!acc, placeholderData: (p) => p,
   });
-  const chart = useQuery({
-    queryKey: ["chart", sel], queryFn: () => fetchChart({ data: { symbol: sel } }),
-    refetchInterval: 30000, enabled: !!acc,
-  });
-  const prices = useMemo(() => Object.fromEntries((quotes.data ?? []).map((q) => [q.symbol, q.price])), [quotes.data]);
 
   useEffect(() => {
     if (!acc || !quotes.data?.length) return;
