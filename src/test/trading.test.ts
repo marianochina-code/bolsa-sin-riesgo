@@ -28,7 +28,7 @@ describe("paper trading", () => {
     // comisión 0.5% con mínimo 1 USD; impuesto 15% sobre ganancia
     let a = placeOrder(newAccount(), base(), 100);
     a = closePosition(a, "1", 110, 1, "manual");
-    const t = a.trades[0];
+    const t = a.trades[0]!;
     expect(t.gross).toBe(10);
     expect(t.commissions).toBe(2);
     expect(t.tax).toBe(1.5);
@@ -39,13 +39,13 @@ describe("paper trading", () => {
     let a = placeOrder(newAccount(), base(), 100);
     a = processPrices(a, { AAPL: 94 }, 5);
     expect(a.positions).toHaveLength(0);
-    expect(a.trades[0].exitReason).toBe("stop-loss");
-    expect(a.trades[0].exit).toBe(95);
+    expect(a.trades[0]!.exitReason).toBe("stop-loss");
+    expect(a.trades[0]!.exit).toBe(95);
   });
   it("ejecuta orden límite cuando el precio la alcanza", () => {
     let a = placeOrder(newAccount(), base({ type: "limit", limitPrice: 98, sl: 94, tp: 106 }), 100);
     expect(a.positions).toHaveLength(0);
     a = processPrices(a, { AAPL: 97.5 }, 5);
-    expect(a.positions[0].entry).toBe(98);
+    expect(a.positions[0]!.entry).toBe(98);
   });
 });
