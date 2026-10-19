@@ -33,7 +33,7 @@ function AuthPage() {
       else nav({ to: "/simulador" });
     } else {
       const { error } = await supabase.auth.signUp({ email, password: pass, options: { emailRedirectTo: `${window.location.origin}/simulador` } });
-      if (error) setMsg({ ok: false, t: error.message });
+      if (error) setMsg({ ok: false, t: /weak|pwned|guess/i.test(error.message) ? "Esa contraseña es muy fácil de adivinar. Probá con otra más larga y única." : /registered|exists/i.test(error.message) ? "Ya existe una cuenta con ese email. Probá ingresar." : "No se pudo crear la cuenta. Revisá los datos e intentá de nuevo." });
       else setMsg({ ok: true, t: "¡Listo! Revisá tu email y hacé clic en el enlace para confirmar tu cuenta." });
     }
     setBusy(false);
