@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { getChart, getQuotes } from "@/lib/market.functions";
+import { getChart, getQuotes, searchSymbols } from "@/lib/market.functions";
 import {
   cancelOrder, closePosition, equity, newAccount, placeOrder, processPrices, unrealized, usedMargin,
   type Account, type Settings,
@@ -43,8 +43,19 @@ function Simulador() {
   const [editing, setEditing] = useState(false);
   const [sel, setSel] = useState("AAPL");
   const [tab, setTab] = useState<"pos" | "ord" | "log">("pos");
+  const [watch, setWatch] = useState<[string, string][]>(SYMBOLS);
+  const [q, setQ] = useState("");
+  const [dq, setDq] = useState("");
   const fetchQuotes = useServerFn(getQuotes);
   const fetchChart = useServerFn(getChart);
+  const doSearch = useServerFn(searchSymbols);
+
+  useEffect(() => {
+    try { const w = localStorage.getItem("watchlist"); if (w) setWatch(JSON.parse(w)); } catch { /* ignore */ }
+  }, []);
+  useEffect(() => { const t = setTimeout(() => setDq(q.trim()), 350); return () => clearTimeout(t); }, [q]);
+  const updateWatch = (w: [string, string][]) => { setWatch(w); localStorage.setItem("watchlist", JSON.stringify(w)); };
+  const search = useQuery({ queryKey: ["search", dq], queryFn: () => doSearch({ data: { q: dq } }), enabled: dq.length > 0 });
 
   const { user, loading } = useAuth();
 
@@ -65,9 +76,17 @@ function Simulador() {
       .then(({ error }) => { if (error) alert("No se pudo guardar tu cuenta. Revisá tu conexión."); });
   };
 
+  const allSymbols = useMemo(() => {
+    const s = new Set(watch.map((w) => w[0]));
+    s.add(sel);
+    acc?.positions.forEach((p) => s.add(p.symbol));
+    acc?.orders.forEach((o) => s.add(o.symbol));
+    return [...s].slice(0, 20);
+  }, [watch, sel, acc]);
+
   const quotes = useQuery({
-    queryKey: ["quotes"], queryFn: () => fetchQuotes({ data: { symbols: SYMBOLS.map((s) => s[0]) } }),
-    refetchInterval: 5000, enabled: !!acc,
+    queryKey: ["quotes", allSymbols.join(",")], queryFn: () => fetchQuotes({ data: { symbols: allSymbols } }),
+    refetchInterval: 5000, enabled: !!acc, placeholderData: (p) => p,
   });
   const chart = useQuery({
     queryKey: ["chart", sel], queryFn: () => fetchChart({ data: { symbol: sel } }),
@@ -135,21 +154,44 @@ function Simulador() {
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)_340px]">
         <div className="rounded-2xl border bg-card p-2 shadow-card lg:max-h-[620px] lg:overflow-auto">
+          <div className="relative px-1 pb-2">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar cualquier acción, ETF o cripto…"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm" aria-label="Buscar activo" />
+            {dq && (
+              <div className="absolute inset-x-1 top-full z-20 max-h-80 overflow-auto rounded-lg border bg-popover shadow-card">
+                {search.isFetching && <p className="p-3 text-xs text-muted-foreground">Buscando…</p>}
+                {!search.isFetching && !search.data?.length && <p className="p-3 text-xs text-muted-foreground">Sin resultados</p>}
+                {search.data?.map((h) => (
+                  <button key={h.symbol} onClick={() => {
+                    if (!watch.some((w) => w[0] === h.symbol)) updateWatch(([[h.symbol, h.name]] as [string, string][]).concat(watch).slice(0, 18));
+                    setSel(h.symbol); setQ(""); setDq("");
+                  }} className="block w-full px-3 py-2 text-left text-sm hover:bg-secondary">
+                    <b>{h.symbol}</b> <span className="text-muted-foreground">· {h.name}</span>
+                    <span className="block text-xs text-muted-foreground">{h.exchange} {h.type && `· ${h.type}`}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">
             {quotes.isError ? "Error al cargar cotizaciones" : quotes.dataUpdatedAt ? `En vivo · ${new Date(quotes.dataUpdatedAt).toLocaleTimeString("es-AR")}` : "Conectando…"}
           </p>
           <div className="flex gap-2 overflow-x-auto lg:block">
-            {SYMBOLS.map(([s, n]) => {
+            {watch.map(([s, n]) => {
               const q = quotes.data?.find((x) => x.symbol === s);
               const ch = q ? ((q.price - q.prevClose) / q.prevClose) * 100 : 0;
               return (
-                <button key={s} onClick={() => setSel(s)} className={`w-40 shrink-0 rounded-xl px-3 py-2 text-left lg:w-full ${sel === s ? "bg-secondary" : ""}`}>
+                <div key={s} className={`group relative w-40 shrink-0 rounded-xl lg:w-full ${sel === s ? "bg-secondary" : ""}`}>
+                <button onClick={() => setSel(s)} className="w-full px-3 py-2 text-left">
                   <div className="flex justify-between gap-2 text-sm font-bold"><span>{s}</span><span className="tabular-nums">{q ? q.price.toFixed(2) : "…"}</span></div>
                   <div className="flex justify-between gap-2 text-xs text-muted-foreground">
                     <span className="truncate">{n}</span>
                     <span className={ch >= 0 ? "text-success" : "text-destructive"}>{q ? `${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%` : ""}</span>
                   </div>
                 </button>
+                <button aria-label={`Quitar ${s}`} onClick={() => updateWatch(watch.filter((w) => w[0] !== s))}
+                  className="absolute -right-1 -top-1 hidden h-5 w-5 rounded-full bg-muted text-xs group-hover:block">×</button>
+                </div>
               );
             })}
           </div>

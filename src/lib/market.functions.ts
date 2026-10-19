@@ -15,6 +15,29 @@ async function yahoo(symbol: string, range: string, interval: string) {
 
 const SYMBOL = /^[A-Z0-9.\-^=]{1,15}$/;
 
+export type SearchHit = { symbol: string; name: string; exchange: string; type: string };
+
+export const searchSymbols = createServerFn({ method: "GET" })
+  .inputValidator((d: { q: string }) => ({ q: String(d.q ?? "").slice(0, 40) }))
+  .handler(async ({ data }): Promise<SearchHit[]> => {
+    if (!data.q.trim()) return [];
+    try {
+      const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(data.q)}&quotesCount=15&newsCount=0`;
+      const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" } });
+      if (!res.ok) return [];
+      const json = (await res.json()) as any;
+      return (json?.quotes ?? [])
+        .filter((x: any) => x.symbol && SYMBOL.test(String(x.symbol).toUpperCase()))
+        .map((x: any) => ({
+          symbol: String(x.symbol).toUpperCase(), name: x.shortname ?? x.longname ?? x.symbol,
+          exchange: x.exchDisp ?? x.exchange ?? "", type: x.typeDisp ?? x.quoteType ?? "",
+        }));
+    } catch (e) {
+      console.error("search", e);
+      return [];
+    }
+  });
+
 export const getQuotes = createServerFn({ method: "GET" })
   .inputValidator((d: { symbols: string[] }) => ({ symbols: d.symbols.filter((s) => SYMBOL.test(s)).slice(0, 20) }))
   .handler(async ({ data }) => {
