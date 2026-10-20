@@ -11,6 +11,7 @@ import {
   type Account, type Settings,
 } from "@/lib/trading";
 import { Section } from "@/components/site";
+import { Donate } from "@/components/Donate";
 import { SetupForm } from "@/components/trading/SetupForm";
 import { OrderTicket } from "@/components/trading/OrderTicket";
 import { exportCsv, TradeLog } from "@/components/trading/TradeLog";
@@ -280,9 +281,14 @@ function Simulador() {
         )}
       </div>
 
-      <p className="mt-8 text-xs text-muted-foreground">
-        Cotizaciones de mercado real (fuente pública; las acciones solo se mueven en horario de bolsa de EE.UU., las cripto 24/7). Herramienta educativa: no es asesoramiento financiero.
-      </p>
+      <div className="mt-8 rounded-2xl border bg-card p-4 text-sm shadow-card">
+        <p className="font-bold">¿De dónde salen los precios?</p>
+        <p className="mt-1 text-muted-foreground">
+          Las cotizaciones vienen de <a href="https://finance.yahoo.com/" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">Yahoo Finance</a>, con precios del mercado real que se actualizan cada 5 segundos. Las acciones solo se mueven en el horario de su bolsa; las cripto, las 24 horas. Algunas bolsas fuera de EE.UU. pueden tener una pequeña demora.
+        </p>
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground">Herramienta educativa: no es asesoramiento financiero.</p>
+      <Donate />
     </Section>
   );
 }

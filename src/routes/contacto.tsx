@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MessageCircle } from "lucide-react";
 import { Section } from "@/components/site";
+import { Donate } from "@/components/Donate";
 
 const PHONE_DISPLAY = "11 3190-9003";
 const WHATSAPP_HREF =
@@ -40,6 +41,7 @@ function Contacto() {
           <MessageCircle className="h-5 w-5" /> Escribir por WhatsApp
         </a>
       </div>
+      <Donate />
     </Section>
   );
 }
