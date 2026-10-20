@@ -43,6 +43,7 @@ const STEPS: { t: string; body: string[]; tip: string }[] = [
     body: [
       "Arriba ves tu patrimonio, efectivo, margen usado y resultado total.",
       "A la izquierda, la lista de activos con precio en tiempo real y variación del día. Tocá uno para ver su gráfico.",
+      "Los precios los provee Yahoo Finance y se refrescan cada 5 segundos.",
       "En el centro, el gráfico minuto a minuto. Cuando tenés una posición, aparecen las líneas de Entrada, SL y TP.",
       "A la derecha, el panel para enviar órdenes.",
     ],
