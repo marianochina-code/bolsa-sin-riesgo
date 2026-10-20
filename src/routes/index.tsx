@@ -94,7 +94,7 @@ function Index() {
         <div className="mt-6 divide-y rounded-2xl border bg-card">
           {[
             ["¿Tengo que poner dinero?", "No. Todo el saldo es virtual. Es un entorno de práctica 100% gratuito."],
-            ["¿Los precios son reales?", "Sí, el simulador usa cotizaciones del mercado real. El dinero es lo único ficticio."],
+            ["¿Los precios son reales?", "Sí. Tomamos las cotizaciones de Yahoo Finance y las refrescamos cada 5 segundos. Lo único ficticio es el dinero."],
             ["¿Necesito saber algo de antes?", "No. En la sección Aprender tenés guías desde cero."],
             ["¿Es asesoramiento financiero?", "No. Es una herramienta educativa. Antes de invertir dinero real, informate con un profesional matriculado."],
           ].map(([q, a]) => (

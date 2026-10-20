@@ -72,7 +72,9 @@ export function Footer() {
         </div>
         <div className="text-sm"><p className="font-bold">Contacto</p><Link to="/contacto" className="mt-2 block opacity-80 hover:opacity-100">Ver contacto</Link></div>
         <p className="text-xs opacity-60">
-          Plataforma educativa. Los precios del simulador son ficticios y no constituyen asesoramiento financiero ni recomendación de inversión.
+          Plataforma educativa: el dinero es virtual, las cotizaciones son reales. Los precios salen de{" "}
+          <a href="https://finance.yahoo.com/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-100">Yahoo Finance</a>
+          {" "}y se actualizan cada 5 segundos. Este sitio no constituye asesoramiento financiero ni recomendación de inversión.
         </p>
       </div>
     </footer>
