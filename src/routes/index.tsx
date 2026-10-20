@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
 
 const features = [
   { icon: Wallet, t: "Capital realista", d: "Elegís tu capital y apalancamiento reales. Nunca ponés un peso." },
-  { icon: LineChart, t: "Datos en tiempo real", d: "Market, Limit, Stop-Loss y Take-Profit sobre Apple, NVIDIA, MELI, S&P 500, Bitcoin y más." },
+  { icon: LineChart, t: "Datos en tiempo real", d: "Market, Limit, Stop-Loss y Take-Profit sobre Apple, NVIDIA, MELI, S&P 500, Bitcoin y más, con precios de Yahoo Finance." },
   { icon: GraduationCap, t: "Trading journal", d: "Historial automático con por qué, emociones y capturas de cada operación." },
   { icon: ShieldCheck, t: "Riesgo obligatorio", d: "Máximo 1–2% por operación y ratio mínimo 1:2. Comisiones e impuestos incluidos." },
 ];
@@ -58,7 +58,12 @@ function Index() {
               {[["Tiempo real", "cotizaciones"], ["1–2%", "riesgo máx."], ["0 USD", "de tu bolsillo"]].map(([a, b]) => (
                 <div key={b}><p className="font-display text-2xl font-bold">{a}</p><p className="text-xs opacity-70">{b}</p></div>
               ))}
-              </div>
+            </div>
+            <p className="mt-5 text-xs opacity-70">
+              Cotizaciones en tiempo real de{" "}
+              <a href="https://finance.yahoo.com/" target="_blank" rel="noopener noreferrer" className="font-semibold underline">Yahoo Finance</a>
+              . El dinero es virtual; los precios, no.
+            </p>
             </div>
         </Section>
       </div>
