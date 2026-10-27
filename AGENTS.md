@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- All simulator mutations use authenticated account actions with compare-and-swap database commits; scheduled processing uses the same primitive to prevent stale snapshots resurrecting closed positions.
+- The managed minute schedule calls the cron-authenticated public server route, which reads Yahoo prices and reuses the pure trading engine; no browser-only automatic execution.
+- Position editing UI is isolated in PositionRow; validation and percentage/net calculations are shared pure trading functions for testability.

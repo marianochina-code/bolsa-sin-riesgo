@@ -49,6 +49,32 @@ export const commission = (s: Settings, notional: number) =>
 
 export const unrealized = (p: Position, price: number) => (price - p.entry) * p.qty * dir(p.side);
 
+export function takeProfitByPercent(p: Position, percent: number) {
+  return r2(p.entry * (1 + dir(p.side) * percent / 100));
+}
+
+export function estimatedTakeProfitNet(p: Position, tp: number) {
+  const gross = unrealized(p, tp);
+  const costs = (value: number) => r2(Math.max(1, value * 0.005));
+  return r2(gross - costs(p.entry * p.qty) - costs(tp * p.qty) - (gross > 0 ? r2(gross * 0.05) : 0));
+}
+
+export function validatePositionLevels(p: Position, sl: number, tp: number, price: number): string | null {
+  if (!Number.isFinite(price) || price <= 0) return "No hay una cotización válida. Intentá nuevamente.";
+  if (!Number.isFinite(sl) || !Number.isFinite(tp) || sl <= 0 || tp <= 0) return "SL y TP deben ser precios positivos.";
+  if (p.side === "long" && !(sl < price && tp > price)) return "En compra: SL menor y TP mayor que el precio actual.";
+  if (p.side === "short" && !(sl > price && tp < price)) return "En short: SL mayor y TP menor que el precio actual.";
+  return null;
+}
+
+export function updatePositionLevels(a: Account, id: string, sl: number, tp: number, price: number): Account {
+  const p = a.positions.find((p) => p.id === id);
+  if (!p) throw new Error("La posición ya no está abierta.");
+  const error = validatePositionLevels(p, sl, tp, price);
+  if (error) throw new Error(error);
+  return { ...a, positions: a.positions.map((p) => p.id === id ? { ...p, sl, tp } : p) };
+}
+
 export function usedMargin(a: Account) {
   return a.positions.reduce((t, p) => t + (p.entry * p.qty) / a.settings.leverage, 0);
 }

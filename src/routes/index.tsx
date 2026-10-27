@@ -11,6 +11,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Invertí en bolsa sin poner plata — BolsaPráctica" },
       { property: "og:description", content: "Simulador gratuito con datos en tiempo real y gestión de riesgo para practicar sin riesgo." },
       { property: "og:url", content: "/" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),

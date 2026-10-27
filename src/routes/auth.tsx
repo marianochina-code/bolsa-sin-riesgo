@@ -12,6 +12,8 @@ export const Route = createFileRoute("/auth")({
       { property: "og:title", content: "Ingresar — BolsaPráctica" },
       { property: "og:description", content: "Guardá tu progreso de paper trading en la nube." },
       { name: "robots", content: "noindex" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,
