@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { estimatedTakeProfitNet, takeProfitByPercent, unrealized, validatePositionLevels, type Position } from "@/lib/trading";
 
 export function PositionRow({ position: p, price, busy, onEdit, onClose }: {
-  position: Position; price?: number; busy: boolean;
+  position: Position; price?: number | undefined; busy: boolean;
   onEdit: (sl: number, tp: number) => Promise<boolean>; onClose: () => void;
 }) {
   const [editing, setEditing] = useState(false);
