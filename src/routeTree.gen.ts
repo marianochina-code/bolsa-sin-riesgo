@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SimuladorRouteImport } from './routes/simulador'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TutorialRouteImport } from './routes/tutorial'
+import { Route as ApiPublicJobsProcessPositionsRouteImport } from './routes/api/public/jobs/process-positions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,12 @@ const TutorialRoute = TutorialRouteImport.update({
   path: '/tutorial',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicJobsProcessPositionsRoute =
+  ApiPublicJobsProcessPositionsRouteImport.update({
+    id: '/api/public/jobs/process-positions',
+    path: '/api/public/jobs/process-positions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/simulador': typeof SimuladorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tutorial': typeof TutorialRoute
+  '/api/public/jobs/process-positions': typeof ApiPublicJobsProcessPositionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +86,7 @@ export interface FileRoutesByTo {
   '/simulador': typeof SimuladorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tutorial': typeof TutorialRoute
+  '/api/public/jobs/process-positions': typeof ApiPublicJobsProcessPositionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +98,7 @@ export interface FileRoutesById {
   '/simulador': typeof SimuladorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tutorial': typeof TutorialRoute
+  '/api/public/jobs/process-positions': typeof ApiPublicJobsProcessPositionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
     | '/simulador'
     | '/sitemap.xml'
     | '/tutorial'
+    | '/api/public/jobs/process-positions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/simulador'
     | '/sitemap.xml'
     | '/tutorial'
+    | '/api/public/jobs/process-positions'
   id:
     | '__root__'
     | '/'
@@ -121,6 +133,7 @@ export interface FileRouteTypes {
     | '/simulador'
     | '/sitemap.xml'
     | '/tutorial'
+    | '/api/public/jobs/process-positions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +145,7 @@ export interface RootRouteChildren {
   SimuladorRoute: typeof SimuladorRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TutorialRoute: typeof TutorialRoute
+  ApiPublicJobsProcessPositionsRoute: typeof ApiPublicJobsProcessPositionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TutorialRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jobs/process-positions': {
+      id: '/api/public/jobs/process-positions'
+      path: '/api/public/jobs/process-positions'
+      fullPath: '/api/public/jobs/process-positions'
+      preLoaderRoute: typeof ApiPublicJobsProcessPositionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +225,7 @@ const rootRouteChildren: RootRouteChildren = {
   SimuladorRoute: SimuladorRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TutorialRoute: TutorialRoute,
+  ApiPublicJobsProcessPositionsRoute: ApiPublicJobsProcessPositionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

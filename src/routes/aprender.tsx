@@ -10,6 +10,7 @@ export const Route = createFileRoute("/aprender")({
       { property: "og:title", content: "Cómo invertir en bolsa desde cero" },
       { property: "og:description", content: "Guía simple: acciones, ETFs, CEDEARs, diversificación y riesgo." },
       { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
       { property: "og:url", content: "/aprender" },
     ],
     links: [{ rel: "canonical", href: "/aprender" }],

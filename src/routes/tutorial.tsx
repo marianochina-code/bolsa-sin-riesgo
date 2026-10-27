@@ -11,6 +11,7 @@ export const Route = createFileRoute("/tutorial")({
       { property: "og:title", content: "Tutorial del simulador de paper trading" },
       { property: "og:description", content: "Aprendé a usar la web paso a paso para practicar inversiones sin poner plata." },
       { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
       { property: "og:url", content: "/tutorial" },
     ],
     links: [{ rel: "canonical", href: "/tutorial" }],

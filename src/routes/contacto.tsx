@@ -16,6 +16,8 @@ export const Route = createFileRoute("/contacto")({
       { property: "og:title", content: "Contacto por WhatsApp — BolsaPráctica" },
       { property: "og:description", content: "Escribinos por WhatsApp al 11 3190-9003 para resolver tus dudas sobre el simulador de paper trading." },
       { property: "og:url", content: "/contacto" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "/contacto" }],
   }),

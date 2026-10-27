@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getChart, getQuotes, searchSymbols } from "@/lib/market.functions";
 import {
-  cancelOrder, closePosition, equity, newAccount, placeOrder, processPrices, unrealized, usedMargin,
+  equity, usedMargin,
   type Account, type Settings,
 } from "@/lib/trading";
 import { Section } from "@/components/site";
@@ -15,6 +15,8 @@ import { Donate } from "@/components/Donate";
 import { SetupForm } from "@/components/trading/SetupForm";
 import { OrderTicket } from "@/components/trading/OrderTicket";
 import { exportCsv, TradeLog } from "@/components/trading/TradeLog";
+import { PositionRow } from "@/components/trading/PositionRow";
+import { changeAccount, type AccountAction } from "@/lib/accounts.functions";
 
 export const Route = createFileRoute("/simulador")({
   staticData: { sitemap: true },
@@ -25,6 +27,8 @@ export const Route = createFileRoute("/simulador")({
       { property: "og:title", content: "Simulador de paper trading en tiempo real" },
       { property: "og:description", content: "Órdenes avanzadas, gestión de riesgo obligatoria y trading journal. Sin poner plata." },
       { property: "og:url", content: "/simulador" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "/simulador" }],
   }),
@@ -50,6 +54,9 @@ function Simulador() {
   const fetchQuotes = useServerFn(getQuotes);
   const fetchChart = useServerFn(getChart);
   const doSearch = useServerFn(searchSymbols);
+  const mutate = useServerFn(changeAccount);
+  const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     try { const w = localStorage.getItem("watchlist"); if (w) setWatch(JSON.parse(w)); } catch { /* ignore */ }
@@ -69,12 +76,16 @@ function Simulador() {
       setLoaded(true);
     });
   }, [user, loading]);
-  const save = (a: Account) => {
-    setAcc(a);
-    if (!user) return;
-    supabase.from("paper_accounts")
-      .upsert({ user_id: user.id, data: a as never, updated_at: new Date().toISOString() })
-      .then(({ error }) => { if (error) alert("No se pudo guardar tu cuenta. Revisá tu conexión."); });
+  const save = async (action: AccountAction): Promise<boolean> => {
+    if (!user || busy) return false;
+    setBusy(true); setSaveError(null);
+    try {
+      const result = await mutate({ data: action });
+      if (result.error || !result.account) { setSaveError(result.error ?? "No se pudo guardar."); return false; }
+      setAcc(result.account);
+      return true;
+    } catch { setSaveError("No se pudo guardar. Revisá tu conexión e intentá nuevamente."); return false; }
+    finally { setBusy(false); }
   };
 
   const allSymbols = useMemo(() => {
@@ -96,11 +107,10 @@ function Simulador() {
   const prices = useMemo(() => Object.fromEntries((quotes.data ?? []).map((q) => [q.symbol, q.price])), [quotes.data]);
 
   useEffect(() => {
-    if (!acc || !quotes.data?.length) return;
-    const next = processPrices(acc, prices, Date.now());
-    if (next !== acc && (next.positions.length !== acc.positions.length || next.orders.length !== acc.orders.length)) save(next);
+    if (!acc || busy || (!acc.positions.length && !acc.orders.length)) return;
+    void save({ kind: "process" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prices]);
+  }, [quotes.dataUpdatedAt]);
 
   if (loading || !loaded) return <Section className="py-10"><p>Cargando…</p></Section>;
 
@@ -121,8 +131,9 @@ function Simulador() {
       <Section className="max-w-2xl py-10">
         <SetupForm initial={acc?.settings} onSave={(s: Settings) => {
           if (acc && !confirm("Esto reinicia tu cuenta y borra el historial. ¿Continuar?")) return;
-          save(newAccount(s)); setEditing(false);
+          void save({ kind: "reset", settings: s }).then((ok) => { if (ok) setEditing(false); });
         }} />
+        {saveError && <p role="alert" className="mt-3 text-destructive">{saveError}</p>}
         {acc && <button onClick={() => setEditing(false)} className="mt-4 text-sm underline">Cancelar</button>}
       </Section>
     );
@@ -135,6 +146,7 @@ function Simulador() {
 
   return (
     <Section className="py-6">
+      {saveError && <p role="alert" className="mb-4 text-sm text-destructive">{saveError}</p>}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">Paper trading</h1>
@@ -227,7 +239,7 @@ function Simulador() {
         </div>
 
         <OrderTicket account={acc} symbol={sel} price={prices[sel]} onPlace={(o) => {
-          try { save(placeOrder(acc, o, prices[sel] ?? 0)); setTab(o.type === "market" ? "pos" : "ord"); } catch (e) { alert((e as Error).message); }
+          void save({ kind: "place", order: o }).then((ok) => { if (ok) setTab(o.type === "market" ? "pos" : "ord"); });
         }} />
       </div>
 
@@ -243,23 +255,9 @@ function Simulador() {
       <div className="mt-4">
         {tab === "pos" && (acc.positions.length ? (
           <div className="space-y-3">
-            {acc.positions.map((p) => {
-              const px = prices[p.symbol] ?? p.entry;
-              const u = unrealized(p, px);
-              return (
-                <div key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-card p-4 shadow-card">
-                  <div className="min-w-0 text-sm">
-                    <p className="font-display font-bold">{p.symbol} · {p.side === "long" ? "Compra" : "Venta corta"} · {p.qty}</p>
-                    <p className="text-muted-foreground">Entrada {p.entry.toFixed(2)} · Actual {px.toFixed(2)} · SL {p.sl} · TP {p.tp}</p>
-                    <p className="truncate text-muted-foreground">Por qué: {p.journal.reason}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-bold tabular-nums ${u >= 0 ? "text-success" : "text-destructive"}`}>{u >= 0 ? "+" : ""}{u.toFixed(2)}</p>
-                    <button onClick={() => save(closePosition(acc, p.id, px, Date.now(), "manual"))} className="mt-1 rounded-lg bg-ink px-3 py-1.5 text-xs font-bold text-ink-foreground">Cerrar</button>
-                  </div>
-                </div>
-              );
-            })}
+            {acc.positions.map((p) => <PositionRow key={p.id} position={p} price={prices[p.symbol]} busy={busy}
+              onEdit={(sl, tp) => save({ kind: "levels", id: p.id, sl, tp })}
+              onClose={() => { void save({ kind: "close", id: p.id }); }} />)}
           </div>
         ) : <Empty t="No tenés posiciones abiertas." />)}
 
@@ -270,14 +268,14 @@ function Simulador() {
                 <p className="min-w-0">
                   <b>{o.symbol}</b> · Límite {o.side === "long" ? "compra" : "venta"} {o.qty} @ {o.limitPrice} · SL {o.sl} · TP {o.tp}
                 </p>
-                <button onClick={() => save(cancelOrder(acc, o.id))} className="shrink-0 rounded-lg border px-3 py-1.5 text-xs font-bold">Cancelar</button>
+                <button disabled={busy} onClick={() => { void save({ kind: "cancel", id: o.id }); }} className="shrink-0 rounded-lg border px-3 py-1.5 text-xs font-bold">Cancelar</button>
               </div>
             ))}
           </div>
         ) : <Empty t="No hay órdenes pendientes." />)}
 
         {tab === "log" && (
-          <TradeLog trades={acc.trades} onJournal={(id, j) => save({ ...acc, trades: acc.trades.map((t) => (t.id === id ? { ...t, journal: j } : t)) })} />
+          <TradeLog trades={acc.trades} onJournal={(id, j) => { void save({ kind: "journal", id, journal: j }); }} />
         )}
       </div>
 
