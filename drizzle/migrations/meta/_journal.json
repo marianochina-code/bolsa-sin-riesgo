@@ -8,6 +8,13 @@
       "when": 1792374632522,
       "tag": "0000_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793065936211,
+      "tag": "0001_atomic_paper_account_saves",
+      "breakpoints": true
     }
   ]
 }
